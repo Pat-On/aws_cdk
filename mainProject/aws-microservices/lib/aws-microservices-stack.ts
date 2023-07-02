@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import * as path from "path";
 
@@ -27,11 +28,35 @@ export class AwsMicroservicesStack extends cdk.Stack {
 
 
     // Lambda Function
-    const fn = new Function(this, "MyFunction", {
+    // const fn = new Function(this, "MyFunction", {
+    //   runtime: Runtime.NODEJS_18_X,
+    //   handler: "index.handler",
+    //   code: Code.fromAsset(path.join(__dirname, 'lambda-handler'))
+    // })
+
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: [
+          'aws-sdk',
+        ]
+      },
+      // injecting variables like in the docker
+      environment: {
+        PRIMARY_KEY: 'id',
+        DYNAMODB_TABLE_NAME: productTable.tableName
+      },
       runtime: Runtime.NODEJS_18_X,
-      handler: "index.handler",
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler'))
-    })
+      // you can specify entry here too
+    };
+
+
+    const productFunction = new NodejsFunction(this, "productLambdaFunction", {
+      entry: path.join(__dirname, '/../src/product/index.js'),
+      ...nodeJsFunctionProps
+    });
+
+    // grant permissions to the DynamoDB to the Lambda Function
+    productTable.grantReadWriteData(productFunction);
 
   }
 }
