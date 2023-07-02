@@ -1,7 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as path from "path";
 
 
 // OUR MAIN CLASS
@@ -24,6 +25,13 @@ export class AwsMicroservicesStack extends cdk.Stack {
       billingMode: BillingMode.PAY_PER_REQUEST
     })
 
+
+    // Lambda Function
+    const fn = new Function(this, "MyFunction", {
+      runtime: Runtime.NODEJS_18_X,
+      handler: "index.handler",
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler'))
+    })
 
   }
 }
