@@ -3,7 +3,9 @@ exports.handler = async function(event) {
 
     // TODO - Switch case event.httpmethod to perform CRUD
 
-    
+    if(event.httpMethod == "GET") {
+        
+    }
 
 
 
