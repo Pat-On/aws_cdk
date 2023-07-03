@@ -1,7 +1,7 @@
 // ES 5 Way of importing
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const { ddbClient } = require("./ddbClient");
-const { GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const { GetItemCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
 
 exports.handler = async function (event) {
     console.log("request:", JSON.stringify(event, undefined, 2));
@@ -37,6 +37,26 @@ const getProduct = async (productId) => {
         };
 
         const { Item } = await ddbClient.send(new GetItemCommand(params));
+
+        console.log(Item);
+        return (Item) ? unmarshall(Item) : {};
+
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
+}
+
+const getAllProducts = async () => {
+    console.log("getAllProducts");
+
+    try {
+        const params = {
+            // this env is coming from aws-microservices-stack.ts
+            TableName: process.env.DYNAMODB_TABLE_NAME,
+        };
+
+        const { Item } = await ddbClient.send(new ScanCommand(params));
 
         console.log(Item);
         return (Item) ? unmarshall(Item) : {};
