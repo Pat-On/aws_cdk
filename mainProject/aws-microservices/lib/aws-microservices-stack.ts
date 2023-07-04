@@ -6,6 +6,8 @@ import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-node
 import { Construct } from 'constructs';
 import * as path from "path";
 import { SwnDatabase } from './database';
+import { SwnMicroservices } from './microservice';
+import { SwnApiGateway } from './apigateway';
 
 
 // OUR MAIN CLASS
@@ -38,55 +40,15 @@ export class AwsMicroservicesStack extends cdk.Stack {
     //   code: Code.fromAsset(path.join(__dirname, 'lambda-handler'))
     // })
 
-    const nodeJsFunctionProps: NodejsFunctionProps = {
-      bundling: {
-        externalModules: [
-          'aws-sdk',
-        ]
-      },
-      // injecting variables like in the docker
-      environment: {
-        PRIMARY_KEY: 'id',
-        DYNAMODB_TABLE_NAME: database.productTable.tableName
-      },
-      runtime: Runtime.NODEJS_18_X,
-      // you can specify entry here too
-    };
-
-
-    const productFunction = new NodejsFunction(this, "productLambdaFunction", {
-      entry: path.join(__dirname, '/../src/product/index.js'),
-      ...nodeJsFunctionProps
+    const microservices = new SwnMicroservices(this, 'Microservices', {
+      productTable: database.productTable
     });
 
-    // grant permissions to the DynamoDB to the Lambda Function
-    database.productTable.grantReadWriteData(productFunction);
+    const apigateway = new SwnApiGateway(this, 'ApiGateway', {
+      productMicroservice: microservices.productMicroservice,
+    });    
 
-    // Product microservice api gateway
-    // root name = product
 
-    // product
-    // GET /product
-    // POST /product
 
-    // single product with id parameter
-    // GET /product/{id}
-    // PUT /product/{id}
-    // DELETE /product/{id}
-
-    const apigw = new LambdaRestApi(this, 'productApi', {
-      restApiName: "Product Service",
-      handler: productFunction,
-      proxy: false
-    });
-
-    const product = apigw.root.addResource('product');
-    product.addMethod("GET");
-    product.addMethod("POST");
-    
-    const singleProduct = product.addResource('{id}') // product/id
-    singleProduct.addMethod('GET')
-    singleProduct.addMethod('PUT')
-    singleProduct.addMethod('DELETE')
   }
 }
