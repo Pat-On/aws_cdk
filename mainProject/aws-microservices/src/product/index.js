@@ -1,7 +1,7 @@
 // ES 5 Way of importing
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const { ddbClient } = require("./ddbClient");
-const { GetItemCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const { GetItemCommand, ScanCommand, PutItemCommand } = require("@aws-sdk/client-dynamodb");
 
 exports.handler = async function (event) {
     console.log("request:", JSON.stringify(event, undefined, 2));
@@ -15,6 +15,10 @@ exports.handler = async function (event) {
             } else {
                 body = await getAllProducts();
             }
+        case "POST":
+            // demo - no sanitization
+            body = await createProduct(event);
+            break;
     }
 
     return {
@@ -63,6 +67,28 @@ const getAllProducts = async () => {
 
     } catch (e) {
         console.error(e);
+        throw e;
+    }
+}
+
+const createProduct = async (event) => {
+    console.log(`createProduct function. event : "${event}"`);
+    try {
+        const requestBody = JSON.parse(event.body);
+
+        const params = {
+            TableName: process.env.DYNAMODB_TABLE_NAME,
+            // marshal is covering for ass providing types
+            Key: marshall( requestBody || {} )
+        };
+
+        // replacing entire object or creating the new one
+        const { createdResult } = await ddbClient.send(new PutItemCommand(params));
+        console.log(createdResult);
+        return createdResult;
+
+    } catch (e){
+        console.log(e);
         throw e;
     }
 }
