@@ -5,6 +5,7 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import * as path from "path";
+import { SwnDatabase } from './database';
 
 
 // OUR MAIN CLASS
@@ -12,20 +13,22 @@ export class AwsMicroservicesStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+
+    const database = new SwnDatabase(this, "Database");
     // The code that defines your stack goes here
 
     // DynamoDB
-    const productTable = new Table(this, 'product', {
-      partitionKey: {
-        name: "id",
-        type: AttributeType.STRING
-      },
-      tableName: "product",
-      // We need to set-up it while studying :>
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      // Pay as you go
-      billingMode: BillingMode.PAY_PER_REQUEST
-    })
+    // const productTable = new Table(this, 'product', {
+    //   partitionKey: {
+    //     name: "id",
+    //     type: AttributeType.STRING
+    //   },
+    //   tableName: "product",
+    //   // We need to set-up it while studying :>
+    //   removalPolicy: cdk.RemovalPolicy.DESTROY,
+    //   // Pay as you go
+    //   billingMode: BillingMode.PAY_PER_REQUEST
+    // })
 
 
     // Lambda Function
@@ -44,7 +47,7 @@ export class AwsMicroservicesStack extends cdk.Stack {
       // injecting variables like in the docker
       environment: {
         PRIMARY_KEY: 'id',
-        DYNAMODB_TABLE_NAME: productTable.tableName
+        DYNAMODB_TABLE_NAME: database.productTable.tableName
       },
       runtime: Runtime.NODEJS_18_X,
       // you can specify entry here too
@@ -57,7 +60,7 @@ export class AwsMicroservicesStack extends cdk.Stack {
     });
 
     // grant permissions to the DynamoDB to the Lambda Function
-    productTable.grantReadWriteData(productFunction);
+    database.productTable.grantReadWriteData(productFunction);
 
     // Product microservice api gateway
     // root name = product
