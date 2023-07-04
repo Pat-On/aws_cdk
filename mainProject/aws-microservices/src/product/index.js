@@ -1,7 +1,7 @@
 // ES 5 Way of importing
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const { ddbClient } = require("./ddbClient");
-const { GetItemCommand, ScanCommand, PutItemCommand, DeleteItemCommand } = require("@aws-sdk/client-dynamodb");
+const { GetItemCommand, ScanCommand, PutItemCommand, DeleteItemCommand, UpdateItemCommand } = require("@aws-sdk/client-dynamodb");
 
 // ES 6
 import { v4 as uuidv4 } from 'uuid';
@@ -24,6 +24,9 @@ exports.handler = async function (event) {
             break;
         case "DELETE":
             body = await deleteProduct(event.pathParameters.id);
+            break;
+        case "UPDATE":
+            body = await updateProduct(event);
             break;
     }
 
@@ -92,7 +95,7 @@ const createProduct = async (event) => {
         };
 
         // replacing entire object or creating the new one
-        const createdResult  = await ddbClient.send(new PutItemCommand(params));
+        const createdResult = await ddbClient.send(new PutItemCommand(params));
         console.log(createdResult);
         return createdResult;
 
@@ -112,15 +115,46 @@ const deleteProduct = async (productId) => {
             Key: marshall({ id: productId })
         }
 
-        const deleteResult = await ddbClient.send(new DeleteItemCommand(params));
-        
+        const deleteProduct = await ddbClient.send(new DeleteItemCommand(params));
+
         console.log(deleteProduct);
         return deleteProduct;
 
 
-    } catch(e) {
+    } catch (e) {
         console.error(e);
         throw e;
     }
 
 }
+
+const updateProduct = async (event) => {
+    console.log(`updateProduct function. event : "${event}"`);
+    try {
+      const requestBody = JSON.parse(event.body);
+      const objKeys = Object.keys(requestBody);
+      console.log(`updateProduct function. requestBody : "${requestBody}", objKeys: "${objKeys}"`);    
+  
+      const params = {
+        TableName: process.env.DYNAMODB_TABLE_NAME,
+        Key: marshall({ id: event.pathParameters.id }),
+        UpdateExpression: `SET ${objKeys.map((_, index) => `#key${index} = :value${index}`).join(", ")}`,
+        ExpressionAttributeNames: objKeys.reduce((acc, key, index) => ({
+            ...acc,
+            [`#key${index}`]: key,
+        }), {}),
+        ExpressionAttributeValues: marshall(objKeys.reduce((acc, key, index) => ({
+            ...acc,
+            [`:value${index}`]: requestBody[key],
+        }), {})),
+      };
+  
+      const updateResult = await ddbClient.send(new UpdateItemCommand(params));
+  
+      console.log(updateResult);
+      return updateResult;
+    } catch(e) {
+      console.error(e);
+      throw e;
+    }
+  }
