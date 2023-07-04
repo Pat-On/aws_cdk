@@ -1,7 +1,10 @@
 // ES 5 Way of importing
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const { ddbClient } = require("./ddbClient");
-const { GetItemCommand, ScanCommand, PutItemCommand } = require("@aws-sdk/client-dynamodb");
+const { GetItemCommand, ScanCommand, PutItemCommand, DeleteItemCommand } = require("@aws-sdk/client-dynamodb");
+
+// ES 6
+import { v4 as uuidv4 } from 'uuid';
 
 exports.handler = async function (event) {
     console.log("request:", JSON.stringify(event, undefined, 2));
@@ -18,6 +21,9 @@ exports.handler = async function (event) {
         case "POST":
             // demo - no sanitization
             body = await createProduct(event);
+            break;
+        case "DELETE":
+            body = await deleteProduct(event.pathParameters.id);
             break;
     }
 
@@ -74,21 +80,47 @@ const getAllProducts = async () => {
 const createProduct = async (event) => {
     console.log(`createProduct function. event : "${event}"`);
     try {
-        const requestBody = JSON.parse(event.body);
+        const productRequest = JSON.parse(event.body);
+
+        const productId = uuidv4();
+        productRequest.id = productId;
 
         const params = {
             TableName: process.env.DYNAMODB_TABLE_NAME,
             // marshal is covering for ass providing types
-            Key: marshall( requestBody || {} )
+            Key: marshall(productRequest || {})
         };
 
         // replacing entire object or creating the new one
-        const { createdResult } = await ddbClient.send(new PutItemCommand(params));
+        const createdResult  = await ddbClient.send(new PutItemCommand(params));
         console.log(createdResult);
         return createdResult;
 
-    } catch (e){
+    } catch (e) {
         console.log(e);
         throw e;
     }
+}
+
+const deleteProduct = async (productId) => {
+    console.log(`deleteProduct function productId ${productId}`);
+
+    try {
+
+        const params = {
+            TableName: process.env.DYNAMODB_TABLE_NAME,
+            Key: marshall({ id: productId })
+        }
+
+        const deleteResult = await ddbClient.send(new DeleteItemCommand(params));
+        
+        console.log(deleteProduct);
+        return deleteProduct;
+
+
+    } catch(e) {
+        console.error(e);
+        throw e;
+    }
+
 }
