@@ -10,37 +10,52 @@ exports.handler = async function (event) {
     console.log("request:", JSON.stringify(event, undefined, 2));
 
     // TODO - Switch case event.httpmethod to perform CRUD
+    try {
+        switch (event.httpMethod) {
+            case "GET":
+                if (event.queryStringParameters != null) {
+                    body = await getProductsByCategory(event); // GET product/1234?category=Phone
+                }
+                else if (event.pathParameters != null) {
+                    body = await getProduct(event.pathParameters.id); // GET product/{id}
+                } else {
+                    body = await getAllProducts(); // GET product
+                }
+                break;
+            case "POST":
+                // demo - no sanitization
+                body = await createProduct(event);
+                break;
+            case "DELETE":
+                body = await deleteProduct(event.pathParameters.id);
+                break;
+            case "UPDATE":
+                body = await updateProduct(event);
+                break;
+            default:
+                throw new Error(`Unsupported route: "${event.httpMethod}"`);
+        }
 
-    switch (event.httpMethod) {
-        case "GET":
-            if(event.queryStringParameters != null) {
-                body = await getProductsByCategory(event); // GET product/1234?category=Phone
-              }
-              else if (event.pathParameters != null) {
-                body = await getProduct(event.pathParameters.id); // GET product/{id}
-              } else {
-                body = await getAllProducts(); // GET product
-              }
-              break;
-        case "POST":
-            // demo - no sanitization
-            body = await createProduct(event);
-            break;
-        case "DELETE":
-            body = await deleteProduct(event.pathParameters.id);
-            break;
-        case "UPDATE":
-            body = await updateProduct(event);
-            break;
-        default:
-            throw new Error(`Unsupported route: "${event.httpMethod}"`);
+        console.log(body);
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            message: `Successfully finished operation: "${event.httpMethod}"`,
+            body: body
+          })
+        };
+
+    } catch (e) {
+        console.error(e);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: "Failed to perform operation.",
+                errorMsg: e.message,
+                errorStack: e.stack,
+            })
+        };
     }
-
-    return {
-        statusCode: 200,
-        headers: { "Content-type": "text/plain " },
-        body: `Hello from Product! You have hit ${event.path} \n`,
-    };
 };
 
 
