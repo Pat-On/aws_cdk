@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 exports.handler = async function (event) {
     console.log("request:", JSON.stringify(event, undefined, 2));
-
-    // TODO - Switch case event.httpmethod to perform CRUD
+    let body;
+    // TODO - Switch case event.httpMethod to perform CRUD
     try {
         switch (event.httpMethod) {
             case "GET":
@@ -18,6 +18,7 @@ exports.handler = async function (event) {
                 }
                 else if (event.pathParameters != null) {
                     body = await getProduct(event.pathParameters.id); // GET product/{id}
+                    
                 } else {
                     body = await getAllProducts(); // GET product
                 }
@@ -83,23 +84,22 @@ const getProduct = async (productId) => {
 
 const getAllProducts = async () => {
     console.log("getAllProducts");
-
     try {
-        const params = {
-            // this env is coming from aws-microservices-stack.ts
-            TableName: process.env.DYNAMODB_TABLE_NAME,
-        };
-
-        const { Item } = await ddbClient.send(new ScanCommand(params));
-
-        console.log(Item);
-        return (Item) ? unmarshall(Item) : {};
-
-    } catch (e) {
-        console.error(e);
-        throw e;
+      const params = {
+        TableName: process.env.DYNAMODB_TABLE_NAME
+      };
+  
+      const { Items } = await ddbClient.send(new ScanCommand(params));
+  
+      console.log(Items);
+      return (Items) ? Items.map((item) => unmarshall(item)) : {};
+  
+    } catch(e) {
+      console.error(e);
+      throw e;
     }
-}
+  }
+
 
 const createProduct = async (event) => {
     console.log(`createProduct function. event : "${event}"`);
