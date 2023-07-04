@@ -8,7 +8,7 @@ import * as path from "path";
 import { SwnDatabase } from './database';
 import { SwnMicroservices } from './microservice';
 import { SwnApiGateway } from './apigateway';
-
+import { SwnEventBus } from './eventbus';
 
 // OUR MAIN CLASS
 export class AwsMicroservicesStack extends cdk.Stack {
@@ -51,6 +51,9 @@ export class AwsMicroservicesStack extends cdk.Stack {
     });   
 
 
-
+    const eventbus = new SwnEventBus(this, 'EventBus', {
+      publisherFuntion: microservices.basketMicroservice,
+      targetFuntion: ??
+    });
   }
 }
