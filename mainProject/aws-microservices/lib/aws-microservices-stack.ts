@@ -85,10 +85,5 @@ export class AwsMicroservicesStack extends cdk.Stack {
     singleProduct.addMethod('GET')
     singleProduct.addMethod('PUT')
     singleProduct.addMethod('DELETE')
-    
-
-
-
-
   }
 }
