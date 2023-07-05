@@ -1,7 +1,7 @@
 import { LambdaRestApi } from "aws-cdk-lib/aws-apigateway";
 import { IFunction } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
-``
+
 interface SwnApiGatewayProps {
     productMicroservice: IFunction,
     basketMicroservice: IFunction,
@@ -10,7 +10,7 @@ interface SwnApiGatewayProps {
 
 export class SwnApiGateway extends Construct {    
 
-     constructor(scope: Construct, id: string, props: SwnApiGatewayProps) {
+    constructor(scope: Construct, id: string, props: SwnApiGatewayProps) {
         super(scope, id);
 
         // Product api gateway
@@ -19,8 +19,7 @@ export class SwnApiGateway extends Construct {
         this.createBasketApi(props.basketMicroservice);
         // Ordering api gateway
         this.createOrderApi(props.orderingMicroservices);
-
-     }
+    }
 
     private createProductApi(productMicroservice: IFunction) {
       // Product microservices api gateway
@@ -82,6 +81,7 @@ export class SwnApiGateway extends Construct {
         basketCheckout.addMethod('POST'); // POST /basket/checkout
             // expected request payload : { userName : swn }
     }
+
     private createOrderApi(orderingMicroservices: IFunction) {
         // Ordering microservices api gateway
         // root name = order

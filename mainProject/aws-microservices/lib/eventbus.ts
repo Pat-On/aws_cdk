@@ -17,7 +17,7 @@ export class SwnEventBus extends Construct {
         const bus = new EventBus(this, 'SwnEventBus', {
             eventBusName: 'SwnEventBus'
         });
-    
+
         const checkoutBasketRule = new Rule(this, 'CheckoutBasketRule', {
             eventBus: bus,
             enabled: true,
@@ -28,12 +28,12 @@ export class SwnEventBus extends Construct {
             },
             ruleName: 'CheckoutBasketRule'
         });
-    
+
         // need to pass target to Ordering Lambda service
-        checkoutBasketRule.addTarget(new LambdaFunction(props.targetFuntion)); 
-        
+        checkoutBasketRule.addTarget(new LambdaFunction(props.targetFuntion));
+
         bus.grantPutEventsTo(props.publisherFuntion);
-            // AccessDeniedException - is not authorized to perform: events:PutEvents
+        // AccessDeniedException - is not authorized to perform: events:PutEvents
 
     }
 
